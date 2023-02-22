@@ -21,6 +21,14 @@ baskets = lines.map(lambda l: l.split())
 N = baskets.count()
 baskets = baskets.map(lambda b: sorted(set(b)))
 
+
+def check(v1,basket,v2=None,singles=None,pairs=None,mode='one'):
+    if mode=='one':
+        return basket[v1] in singles
+    if mode=='two':
+        return (basket[v1],basket[v2]) in pairs
+
+
 def single(basket):
     return [(item,1) for item in basket]
 
@@ -37,10 +45,9 @@ def pair(basket):
     singles = individual_filtered_dict.value
     ret = []
     for i in range(len(basket)):
-        if basket[i] in singles:
             for j in range(i):
-                if basket[j] in singles:
-                    ret.append(((basket[j], basket[i]), 1)) # basket is sorted
+                if check(i,basket,singles=singles) and check(j,basket,singles=singles):
+                    ret.append(((basket[j], basket[i]), 1)) 
     return ret
 
 pairs_filtered = baskets.flatMap(pair).reduceByKey(operator.add).filter(lambda x: x[1] >= 100)
@@ -69,19 +76,11 @@ def triplets(basket):
     singles = individual_filtered_dict.value
     ret = []
     for i in range(len(basket)):
-        if basket[i] not in singles:
-            continue
         for j in range(i):
-            if basket[j] not in singles:
-                continue
-            if (basket[j], basket[i]) not in pairs:
-                continue
             for k in range(j):
-                if basket[k] not in singles:
-                    continue
-                if (basket[k], basket[j]) not in pairs:
-                    continue
-                if (basket[k], basket[i]) not in pairs:
+                if not check(i,basket,singles=singles) and not check(k,basket,singles=singles) and not check(j,basket,singles=singles) :
+                    continue 
+                if not check(j,basket,i,pairs=pairs,mode='two') and not check(k,basket,j,pairs=pairs,mode='two') and not not check(k,basket,i,pairs=pairs,mode='two'):
                     continue
                 ret.append(((basket[k], basket[j], basket[i]), 1))
     return ret
